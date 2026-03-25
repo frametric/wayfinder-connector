@@ -16,10 +16,7 @@
         "name": "Frametric",
         "email": "hello@frametric.ai"
       },
-      "source": {
-        "source": "url",
-        "url": "file:///sessions/compassionate-ecstatic-pasteur/wayfinder-connector"
-      },
+      "source": "./",
       "homepage": "https://frametric.ai/developers",
       "keywords": ["wayfinder", "charity", "nonprofit", "enrichment", "charity-commission"]
     }
