@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "wayfinder": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/servers/wayfinder-server.mjs"],
+      "env": {
+        "WAYFINDER_API_KEY": "${WAYFINDER_API_KEY}",
+        "WAYFINDER_BASE_URL": "https://frametric.ai"
+      }
+    }
+  }
+}

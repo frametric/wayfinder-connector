@@ -1,0 +1,27 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "frametric-wayfinder",
+  "description": "Frametric Wayfinder — charity and nonprofit intelligence for Claude",
+  "owner": {
+    "name": "Frametric",
+    "email": "hello@frametric.ai"
+  },
+  "plugins": [
+    {
+      "name": "wayfinder-connector",
+      "description": "Connect Claude to Frametric Wayfinder — search, explore, and enrich charity and nonprofit data across 6 countries covering 400,000+ organisations",
+      "category": "productivity",
+      "version": "0.3.0",
+      "author": {
+        "name": "Frametric",
+        "email": "hello@frametric.ai"
+      },
+      "source": {
+        "source": "url",
+        "url": "file:///sessions/compassionate-ecstatic-pasteur/wayfinder-connector"
+      },
+      "homepage": "https://frametric.ai/developers",
+      "keywords": ["wayfinder", "charity", "nonprofit", "enrichment", "charity-commission"]
+    }
+  ]
+}
