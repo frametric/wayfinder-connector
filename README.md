@@ -1,6 +1,6 @@
 # Wayfinder Connector
 
-Connect Claude to **Frametric Wayfinder** — the charity and nonprofit intelligence platform covering 400,000+ organisations across six countries.
+Connect Claude to **Frametric Wayfinder** — the charity and nonprofit intelligence platform covering 2 million+ organisations across six countries.
 
 ## Supported Countries
 
@@ -15,9 +15,9 @@ Connect Claude to **Frametric Wayfinder** — the charity and nonprofit intellig
 
 ## What it does
 
-This plugin gives Claude direct access to Wayfinder's data through four tools:
+This plugin gives Claude direct access to Wayfinder's data through six tools:
 
-- **charity_search** — Search charities and nonprofits by name, number, or postcode/zip (with batch exact-matching)
+- **charity_search** — Search charities and nonprofits by name, number, website domain, or postcode/zip. Supports fuzzy matching, batch exact-matching, and charity number lookups.
 - **charity_profile** — Get full profiles including trustees, activities, and classification
 - **charity_financials** — Pull multi-year income and expenditure history
 - **charity_browse** — Paginated browsing of national charity datasets
@@ -25,6 +25,16 @@ This plugin gives Claude direct access to Wayfinder's data through four tools:
 - **charity_benchmarks** — Compare a charity against similar organisations in its sector
 
 Plus a **charity-research skill** that teaches Claude best practices for charity research, CRM enrichment, grantmaker identification, and financial analysis.
+
+## What's new in v0.4.0
+
+- **Website/domain search** — Match charities by their website domain, ideal for CRM enrichment workflows
+- **Fuzzy name matching** — Partial and abbreviated names now return results (e.g. "Naomi House" matches "Naomi House & Jacksplace", "SSAFA" matches the full registered name)
+- **Charity number search** — Search directly by charity registration number
+- **Match confidence scores** — API returns confidence scores for search results, enabling automated enrichment pipelines
+- **Improved US coverage** — 1.8M+ IRS-registered nonprofits now searchable
+
+See the [CHANGELOG](CHANGELOG.md) for full details.
 
 ## Setup
 
@@ -54,6 +64,7 @@ Once installed, just ask Claude:
 - "What are the financials for the Wellcome Trust?"
 - "Compare the top 10 children's charities by income"
 - "Enrich these company records with Wayfinder data"
+- "Find charities with the domain cancerresearchuk.org"
 - "Find grantmaker charities in Australia" (coming soon)
 
 ## Rate limits
