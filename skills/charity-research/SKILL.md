@@ -5,9 +5,10 @@ description: >
   "search for charities", "find nonprofits", "charity data", "enrich company records", "look up a charity",
   "check charity finances", "find grantmakers", "charity intelligence", "prospect research", "nonprofit lookup",
   "US nonprofits", "Australian charities", "Canadian charities", "Irish charities", "Scottish charities",
+  "sector taxonomy", "filter by sector", "sector classification",
   or needs charity/nonprofit registry data for any supported country.
 metadata:
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Charity & Nonprofit Research with Wayfinder
@@ -57,12 +58,24 @@ Multi-year income and expenditure history.
 **When to use:** Trend analysis, financial health assessment, size comparison.
 
 ### charity_browse
-Paginated browse through a national dataset.
+Paginated browse through a national dataset. Supports filtering by Wayfinder's proprietary sector taxonomy.
 
-**When to use:** Building prospect lists, exploring datasets by country.
+**When to use:** Building prospect lists, exploring datasets by country, or filtering charities by sector.
+
+**Sector filtering (new):**
+- `sectorId: <number>` — filter to a specific Wayfinder sector (e.g., `sectorId: 3` for Health & Medical)
+- `subSector: <slug-or-id>` — further filter to a sub-sector; accepts numeric ID or slug string
+- Response includes total count (from `X-Total-Count` header or `body.total`)
+
+### charity_sector *(new — phid:335)*
+Wayfinder's proprietary AI-enriched sector taxonomy for a specific charity.
+
+**When to use:** When you need the proprietary sector/sub-sector classification for a charity — not available via generic Charity Commission APIs. Returns `sectorId`, `sectorName`, `subSectorId`, `subSectorName`, and `modelVersion`. Returns an error if the charity has not been classified yet.
+
+**Example:** `charityNumber: 202918` → `{ sectorId: 2, sectorName: "International Development", subSectorId: 5, subSectorName: "Development Aid", modelVersion: "v2.1" }`
 
 ### charity_classifications
-Detailed classification data — areas of activity, beneficiary groups, and operating methods.
+Detailed classification data — areas of activity, beneficiary groups, and operating methods. Now also includes Wayfinder's proprietary sector taxonomy (`sector` + `sub_sector` inline, backwards-compatible).
 
 **When to use:** Understanding exactly what a charity does, who it serves, and how it operates. Useful for matching charities to specific criteria.
 

@@ -123,7 +123,7 @@ const countryParam = z
 
 const server = new McpServer({
   name: "wayfinder",
-  version: "0.3.0",
+  version: "0.5.0",
 });
 
 // Tool 1: Search charities / nonprofits
@@ -213,29 +213,35 @@ server.tool(
 // Tool 4: Browse charities / nonprofits
 server.tool(
   "charity_browse",
-  `Browse charities and nonprofits with pagination. Returns a paginated list of organisations. Useful for exploring datasets or building large prospect lists. Specify country to browse a specific national dataset.`,
+  `Browse charities and nonprofits with pagination. Supports filtering by proprietary Wayfinder sector taxonomy (sectorId and subSector). Returns a paginated list of organisations with total count. Useful for exploring datasets or building large prospect lists filtered by sector. Specify country to browse a specific national dataset.`,
   {
     country: countryParam,
     limit: z.number().optional().default(20).describe("Results per page (default 20, max 50)"),
     offset: z.number().optional().default(0).describe("Pagination offset"),
+    sectorId: z.number().optional().describe("Filter by Wayfinder proprietary sector ID (numeric)"),
+    subSector: z.union([z.number(), z.string()]).optional().describe("Filter by sub-sector — accepts slug (e.g. 'youth-clubs') or numeric ID"),
   },
-  async ({ country, limit, offset }) => {
+  async ({ country, limit, offset, sectorId, subSector }) => {
     const datasetId = resolveDataset(country);
     const data = await wayfinder("/api/charity/browse", {
       datasetId,
       limit: Math.min(limit || 20, 50),
       offset: offset || 0,
+      ...(sectorId != null ? { sectorId } : {}),
+      ...(subSector != null ? { subSector } : {}),
     });
 
     const results = Array.isArray(data) ? data : data.results || [];
     const summaries = results.map((c, i) => `${offset + i + 1}. ${formatCharitySummary(c, datasetId)}`);
     const region = COUNTRY_LABELS[datasetId];
+    const filterNote = sectorId != null ? ` (sector ${sectorId}${subSector != null ? `, sub-sector ${subSector}` : ""})` : "";
+    const total = data.total != null ? ` of ${data.total} total` : "";
 
     return {
       content: [
         {
           type: "text",
-          text: `${region} — entries ${offset + 1}–${offset + results.length}:\n\n${summaries.join("\n\n")}${datasetWarning(datasetId)}`,
+          text: `${region}${filterNote} — entries ${offset + 1}–${offset + results.length}${total}:\n\n${summaries.join("\n\n")}${datasetWarning(datasetId)}`,
         },
       ],
     };
@@ -245,7 +251,7 @@ server.tool(
 // Tool 5: Get charity classifications
 server.tool(
   "charity_classifications",
-  `Get detailed classification data for a charity — areas of activity, beneficiary groups, and operating methods. Useful for understanding exactly what a charity does and who it serves.`,
+  `Get detailed classification data for a charity — areas of activity, beneficiary groups, operating methods, and (where available) Wayfinder's proprietary AI-enriched sector taxonomy. The response now includes 'sector' and 'sub_sector' fields alongside existing Charity Commission classification codes.`,
   {
     charityNumber: z.number().describe("Registration number (e.g., Charity Commission number, EIN)"),
     country: countryParam,
@@ -253,18 +259,51 @@ server.tool(
   async ({ charityNumber, country }) => {
     const datasetId = resolveDataset(country);
     const data = await wayfinder(`/api/charity/${charityNumber}/classifications`, { datasetId });
+
+    // Surface proprietary sector taxonomy prominently if present
+    const sectorNote = data.sector
+      ? `\n🏷️ Wayfinder Sector Taxonomy:\n  Sector: ${data.sector.sectorName || data.sector.sectorId} (ID: ${data.sector.sectorId})\n  Sub-sector: ${data.sector.subSectorName || data.sector.subSectorId} (ID: ${data.sector.subSectorId})\n  Model version: ${data.sector.modelVersion}\n`
+      : "";
+
     return {
       content: [
         {
           type: "text",
-          text: `Classifications for ${COUNTRY_LABELS[datasetId]} registration ${charityNumber}:\n\n${JSON.stringify(data, null, 2)}${datasetWarning(datasetId)}`,
+          text: `Classifications for ${COUNTRY_LABELS[datasetId]} registration ${charityNumber}:${sectorNote}\n${JSON.stringify(data, null, 2)}${datasetWarning(datasetId)}`,
         },
       ],
     };
   }
 );
 
-// Tool 6: Get charity benchmarks
+// Tool 6: Get proprietary sector taxonomy for a charity
+server.tool(
+  "charity_sector",
+  `Get Wayfinder's proprietary AI-enriched sector taxonomy classification for a specific charity. Returns sectorId, sectorName, subSectorId, subSectorName, and modelVersion. Returns a not-found error if the charity has not been classified yet. This is Frametric's moat data — not available via generic Charity Commission API wrappers.`,
+  {
+    charityNumber: z.number().describe("Registration number (e.g., Charity Commission number, EIN)"),
+    country: countryParam,
+  },
+  async ({ charityNumber, country }) => {
+    const datasetId = resolveDataset(country);
+    const data = await wayfinder(`/api/charity/${charityNumber}/sector`, { datasetId });
+    const region = COUNTRY_LABELS[datasetId];
+
+    const lines = [
+      `Sector taxonomy for ${region} registration ${charityNumber}:`,
+      ``,
+      `  Sector:      ${data.sectorName} (ID: ${data.sectorId})`,
+      `  Sub-sector:  ${data.subSectorName} (ID: ${data.subSectorId})`,
+      `  Model:       ${data.modelVersion}`,
+    ];
+
+    return {
+      content: [{ type: "text", text: lines.join("\n") }],
+    };
+  }
+);
+
+// Tool 8: Get charity benchmarks
 server.tool(
   "charity_benchmarks",
   `Get benchmarking data comparing a charity against similar organisations. Returns financial and operational comparisons within the same sector and size bracket. Useful for due diligence, competitive analysis, and understanding relative performance.`,
