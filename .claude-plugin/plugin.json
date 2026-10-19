@@ -1,6 +1,6 @@
 {
   "name": "wayfinder-connector",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Connect Claude to Frametric Wayfinder — search, explore, and enrich charity and nonprofit data across 6 countries covering 2M+ organisations",
   "author": {
     "name": "Frametric"

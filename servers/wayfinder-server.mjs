@@ -12,22 +12,49 @@
  *   GB-SC (3) — Scotland         |  IE (4)     — Ireland
  *   CA (5)    — Canada           |  AU (6)     — Australia
  *
- * Environment variables:
- *   WAYFINDER_API_KEY  — Bearer token for the Wayfinder API (required)
+ * The key (never printed, never on argv):
+ *   WAYFINDER_API_KEY  — a Wayfinder key (fm_…), if the environment really holds one; else
+ *   WAYFINDER_KEY_FILE — a file holding it, mode 0600 (default: ~/.frametric/wayfinder-connector.key)
  *   WAYFINDER_BASE_URL — API base URL (default: https://frametric.ai)
+ * The Claude desktop app does not read ~/.zshrc, so "${WAYFINDER_API_KEY}" in .mcp.json can arrive
+ * UNEXPANDED; the server used to send that literal text and every call came back 401 "Invalid or
+ * expired API key" (19 Oct 2026). It now refuses to start, naming the cause, instead.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { readFileSync, statSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
-const API_KEY = process.env.WAYFINDER_API_KEY;
-const BASE_URL = (process.env.WAYFINDER_BASE_URL || "https://frametric.ai").replace(/\/$/, "");
+const KEY_FILE = process.env.WAYFINDER_KEY_FILE || join(homedir(), ".frametric", "wayfinder-connector.key");
+const looksLikeKey = (k) => typeof k === "string" && /^fmc?_[A-Za-z0-9_-]{16,}$/.test(k.trim());
 
-if (!API_KEY) {
-  console.error("ERROR: WAYFINDER_API_KEY environment variable is required.");
+function refuse(why) {
+  console.error(`Wayfinder connector refused to start: ${why}`);
   process.exit(1);
 }
+
+function loadKey() {
+  const env = process.env.WAYFINDER_API_KEY;
+  if (looksLikeKey(env)) return env.trim();
+  let st = null;
+  try { st = statSync(KEY_FILE); } catch { /* no key file */ }
+  if (st) {
+    if ((st.mode & 0o077) !== 0) refuse(`${KEY_FILE} can be read by others (mode ${(st.mode & 0o777).toString(8)}); run chmod 600 on it.`);
+    const k = readFileSync(KEY_FILE, "utf8").trim();
+    if (looksLikeKey(k)) return k;
+    refuse(`${KEY_FILE} does not hold a Wayfinder key (fm_...).`);
+  }
+  const why = !env ? "WAYFINDER_API_KEY is not set"
+    : env.includes("${") ? "WAYFINDER_API_KEY arrived as an unexpanded placeholder (the app does not read your shell profile)"
+    : "WAYFINDER_API_KEY is not a Wayfinder key (fm_...)";
+  refuse(`${why}, and there is no key file at ${KEY_FILE}. Put the connector's key there (chmod 600).`);
+}
+
+const API_KEY = loadKey();
+const BASE_URL = (process.env.WAYFINDER_BASE_URL || "https://frametric.ai").replace(/\/$/, "");
 
 // --- Country → datasetId mapping -------------------------------------------
 

@@ -2,6 +2,12 @@
 
 All notable changes to the Wayfinder Connector are documented in this file.
 
+## [0.4.1] - 2026-10-19
+
+### Fixed
+- **The key no longer depends on your shell profile.** The Claude desktop app does not read `~/.zshrc`, so `${WAYFINDER_API_KEY}` in `.mcp.json` reached the server unexpanded and every call came back 401 "Invalid or expired API key". The server now uses `WAYFINDER_API_KEY` only when it holds a real key (`fm_...`), else reads the connector's own key file, `~/.frametric/wayfinder-connector.key` (or `WAYFINDER_KEY_FILE`), which must be mode 0600.
+- **It refuses to start, naming the cause,** when the key is unset, an unexpanded placeholder, in a file others can read, or not a Wayfinder key. The key is never printed.
+
 ## [0.4.0] - 2026-03-27
 
 ### Added
